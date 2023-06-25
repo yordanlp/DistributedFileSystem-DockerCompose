@@ -1,0 +1,96 @@
+version: '3'
+services:
+
+  db:
+    container_name: db
+    image: postgres
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin
+      POSTGRES_DB: fs
+    ports:
+      - 5432:5432
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    networks:
+      - file-system
+
+  chunkserver1:
+    container_name: chunkserver1
+    build:
+      context: ./DistributedFileSystem-ChunkServer
+      dockerfile: Dockerfile
+    ports:
+      - 5001:80
+    depends_on:
+      - db
+    networks:
+      - file-system
+    volumes:
+      - Chunks1:/Chunks
+
+  chunkserver2:
+    container_name: chunkserver2
+    build:
+      context: ./DistributedFileSystem-ChunkServer
+      dockerfile: Dockerfile
+    ports:
+      - 5002:80
+    depends_on:
+      - db
+    networks:
+      - file-system
+    volumes:
+      - Chunks2:/Chunks
+
+  chunkserver3:
+    container_name: chunkserver3
+    build:
+      context: ./DistributedFileSystem-ChunkServer
+      dockerfile: Dockerfile
+    ports:
+      - 5003:80
+    depends_on:
+      - db
+    networks:
+      - file-system
+    volumes:
+      - Chunks3:/Chunks
+
+  clienthttp:
+    container_name: clienthttp
+    build:
+      context: ./ClientHttp
+      dockerfile: Dockerfile
+    ports:
+      - 5004:80
+    depends_on:
+      - db
+      - masterserver
+      - chunkserver1
+      - chunkserver2
+      - chunkserver3
+    networks:
+      - file-system
+
+  masterserver:
+    container_name: masterserver
+    build:
+      context: ./DistributedFileSystem-MasterServer
+      dockerfile: Dockerfile
+    ports:
+      - 5005:80
+    depends_on:
+      - db
+    networks:
+      - file-system
+
+networks:
+  file-system:
+
+
+volumes:
+  db-data:
+  Chunks3:
+  Chunks2:
+  Chunks1:
